@@ -107,6 +107,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 #endif
 
+	case WM_POINTERUPDATE:
+		if (core)
+			core->handlePointerUpdate(lParam, wParam);
+	break;
+
 	case WM_MBUTTONDOWN:
 		if(core)
 			core->handleMouseDown(CoreInput::MOUSE_BUTTON3, lParam,wParam);

@@ -710,6 +710,67 @@ void Win32Core::handleTouchEvent(LPARAM lParam, WPARAM wParam) {
 }
 #endif
 
+void Win32Core::handlePointerUpdate(LPARAM lParam, WPARAM wParam) {
+	lockMutex(eventMutex);
+
+	int iNumContacts = LOWORD(wParam);
+	std::vector<TouchInfo> pointers;
+
+	POINTER_TOUCH_INFO   touchInfo;
+	POINTER_PEN_INFO     penInfo;
+	POINTER_INFO *pointerInfoRaw;
+	UINT32       pointerId = GET_POINTERID_WPARAM(wParam);
+	//POINTER_TYPE pointerType = PT_POINTER;
+	POINTER_INPUT_TYPE pointerType;
+
+	if (!GetPointerType(pointerId, &pointerType))
+	{
+		// failure, call GetLastError()
+		// set PT_POINTER to fall to default case below
+		pointerType = PT_POINTER;
+	}
+
+
+	if (pointerType == PT_PEN){
+
+		GetPointerInfo(pointerId, pointerInfoRaw);
+
+		for (int i = 0; i < iNumContacts; i++){
+			TouchInfo pointerInfo;
+
+			pointerInfo.id = GET_POINTERID_WPARAM(wParam);
+
+			pointerInfo.position.x = pointerInfoRaw->ptPixelLocation.x;
+			pointerInfo.position.y = pointerInfoRaw->ptPixelLocation.y;
+
+			pointerInfo.flag = pointerInfoRaw->pointerFlags;
+			pointerInfo.type = InputEvent::TYPE_PEN;
+			pointers.push_back(pointerInfo);
+		}
+
+		for (int i = 0; i < iNumContacts; i++){
+			Win32Event newEvent;
+			newEvent.eventGroup = Win32Event::INPUT_EVENT;
+			if (pointers[i].flag == POINTER_FLAG_UPDATE){
+				newEvent.eventCode = InputEvent::EVENT_TOUCHES_MOVED;
+			}
+			else if (pointers[i].flag == POINTER_FLAG_DOWN){
+				newEvent.eventCode = InputEvent::EVENT_TOUCHES_BEGAN;
+			}
+			else if (pointers[i].flag == POINTER_FLAG_UP){
+				newEvent.eventCode = InputEvent::EVENT_TOUCHES_ENDED;
+			}
+			newEvent.touches = pointers;
+			newEvent.touch = pointers[i];
+			newEvent.touchType = InputEvent::TYPE_PEN;
+			win32Events.push_back(newEvent);
+		} // END of FOR iNumContacts
+
+	} // END of IF PT_PEN
+
+	unlockMutex(eventMutex);
+}
+
 void Win32Core::handleMouseMove(LPARAM lParam, WPARAM wParam) {
 	lockMutex(eventMutex);
 	Win32Event newEvent;
@@ -720,6 +781,7 @@ void Win32Core::handleMouseMove(LPARAM lParam, WPARAM wParam) {
 	win32Events.push_back(newEvent);
 	unlockMutex(eventMutex);
 }
+
 void Win32Core::handleMouseWheel(LPARAM lParam, WPARAM wParam) {
 	lockMutex(eventMutex);
 	Win32Event newEvent;
@@ -836,7 +898,7 @@ void Win32Core::checkEvents() {
 					break;
 					case InputEvent::EVENT_KEYUP:
 						input->setKeyState(event.keyCode, (char)event.unicodeChar, false, getTicks());
-					break;						
+					break;
 				}
 			break;
 		}

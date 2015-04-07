@@ -294,6 +294,12 @@ namespace Polycode {
 			setMousePosition(touch.position.x, touch.position.y, ticks);
 		}
 	}
+
+
+
+
+
+
 	
 	void CoreInput::touchesEnded(TouchInfo touch, std::vector<TouchInfo> touches, int ticks) {
 		if(ignoreOffScreenTouch) {

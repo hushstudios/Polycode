@@ -116,6 +116,7 @@ namespace Polycode {
 		int mouseY;
 		TouchInfo touch;
 		std::vector<TouchInfo> touches;
+		int touchType;
 		PolyKEY keyCode;
 		wchar_t unicodeChar;		
 		char mouseButton;	
@@ -193,6 +194,7 @@ public:
 		void handleMouseDown(int mouseCode,LPARAM lParam, WPARAM wParam);
 		void handleMouseUp(int mouseCode,LPARAM lParam, WPARAM wParam);
 		void handleTouchEvent(LPARAM lParam, WPARAM wParam);
+		void handlePointerUpdate(LPARAM lParam, WPARAM wParam);
 
 		bool isMultiTouchEnabled() { return hasMultiTouch; }
 
