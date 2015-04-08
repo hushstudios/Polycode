@@ -651,40 +651,38 @@ void Win32Core::handleKeyUp(LPARAM lParam, WPARAM wParam) {
 
 #ifndef NO_TOUCH_API
 void Win32Core::handleTouchEvent(LPARAM lParam, WPARAM wParam) {
-	Logger::log("Poly WM_TOUCH event.\n");
 
-	// Bail out now if multitouch is not available on this system
-	if ( hasMultiTouch == false )
-	{
-		Logger::log("Bailing out!\n");
-		return;
-	}
-	
-	lockMutex(eventMutex);
+		// Bail out now if multitouch is not available on this system
+		if (hasMultiTouch == false)
+		{
+			return;
+		}
 
-	int iNumContacts = LOWORD(wParam);
-	HTOUCHINPUT hInput       = (HTOUCHINPUT)lParam;
-    TOUCHINPUT *pInputs      = new TOUCHINPUT[iNumContacts];
-       
-    if(pInputs != NULL) {
-		if(GetTouchInputInfoFunc(hInput, iNumContacts, pInputs, sizeof(TOUCHINPUT))) {
+		lockMutex(eventMutex);
 
-			std::vector<TouchInfo> touches;
-			for(int i = 0; i < iNumContacts; i++) {
-				TOUCHINPUT ti = pInputs[i];
-				TouchInfo touchInfo;
-				touchInfo.id = (int) ti.dwID;
+		int iNumContacts = LOWORD(wParam);
+		HTOUCHINPUT hInput = (HTOUCHINPUT)lParam;
+		TOUCHINPUT *pInputs = new TOUCHINPUT[iNumContacts];
 
-				POINT pt;
-				pt.x = TOUCH_COORD_TO_PIXEL(ti.x);
-				pt.y = TOUCH_COORD_TO_PIXEL(ti.y);
-				ScreenToClient(hWnd, &pt);
-				touchInfo.position.x = pt.x;
-				touchInfo.position.y = pt.y;
+		if (pInputs != NULL) {
+			if (GetTouchInputInfoFunc(hInput, iNumContacts, pInputs, sizeof(TOUCHINPUT))) {
 
-				touches.push_back(touchInfo);
-			}
-              for(int i = 0; i < iNumContacts; i++) {
+				std::vector<TouchInfo> touches;
+				for (int i = 0; i < iNumContacts; i++) {
+					TOUCHINPUT ti = pInputs[i];
+					TouchInfo touchInfo;
+					touchInfo.id = (int)ti.dwID;
+
+					POINT pt;
+					pt.x = TOUCH_COORD_TO_PIXEL(ti.x);
+					pt.y = TOUCH_COORD_TO_PIXEL(ti.y);
+					ScreenToClient(hWnd, &pt);
+					touchInfo.position.x = pt.x;
+					touchInfo.position.y = pt.y;
+
+					touches.push_back(touchInfo);
+				}
+				for (int i = 0; i < iNumContacts; i++) {
 					TOUCHINPUT ti = pInputs[i];
 					if (ti.dwFlags & TOUCHEVENTF_UP) {
 						Win32Event newEvent;
@@ -692,43 +690,34 @@ void Win32Core::handleTouchEvent(LPARAM lParam, WPARAM wParam) {
 						newEvent.eventCode = InputEvent::EVENT_TOUCHES_ENDED;
 						newEvent.touches = touches;
 						newEvent.touch = touches[i];
-						newEvent.touchType = 99;
-						Logger::log("\nPoly F_UP.");
-						Logger::log("\nPoly type is: ");
-						//Logger::log(win32Events[i].touchType.c_str());
-						win32Events.push_back(newEvent);	
-					} else if(ti.dwFlags & TOUCHEVENTF_MOVE) {
+						win32Events.push_back(newEvent);
+					}
+					else if (ti.dwFlags & TOUCHEVENTF_MOVE) {
 						Win32Event newEvent;
 						newEvent.eventGroup = Win32Event::INPUT_EVENT;
 						newEvent.eventCode = InputEvent::EVENT_TOUCHES_MOVED;
 						newEvent.touches = touches;
 						newEvent.touch = touches[i];
-						newEvent.touchType = 99;
-						Logger::log("\nPoly F_MOVE.");
-						Logger::log("\nPoly type is: ");
-						//Logger::log(win32Events[i].touchType.c_str());
 						win32Events.push_back(newEvent);
-					} else if(ti.dwFlags & TOUCHEVENTF_DOWN) {
+					}
+					else if (ti.dwFlags & TOUCHEVENTF_DOWN) {
 						Win32Event newEvent;
 						newEvent.eventGroup = Win32Event::INPUT_EVENT;
 						newEvent.eventCode = InputEvent::EVENT_TOUCHES_BEGAN;
 						newEvent.touches = touches;
 						newEvent.touch = touches[i];
-						Logger::log("\nPoly F_DOWN.");
-						newEvent.touchType = 99;
-						Logger::log("\nPoly type is: ");
-						//Logger::log(win32Events[i].touchType.c_str());
 						win32Events.push_back(newEvent);
 					}
-			  }
+				}
+			}
 		}
+		unlockMutex(eventMutex);
 	}
-	Logger::log("Unlocking Poly WM\n");
-	unlockMutex(eventMutex);	
-}
 #endif
 
+#ifndef NO_PEN_API
 void Win32Core::handlePointerUpdate(LPARAM lParam, WPARAM wParam) {
+
 	lockMutex(eventMutex);
 
 	POINTER_PEN_INFO    penInfo;
@@ -743,8 +732,8 @@ void Win32Core::handlePointerUpdate(LPARAM lParam, WPARAM wParam) {
 
 		switch (pointerType){
 		case PT_TOUCH:
-			//case PT_MOUSE:
-			//case PT_TOUCHPAD:
+		//case PT_MOUSE:
+		//case PT_TOUCHPAD:
 			GetPointerInfo(pointerId, &pointerInfo);
 			tempInfo.type = TouchInfo::TYPE_TOUCH;
 			break;
@@ -755,14 +744,11 @@ void Win32Core::handlePointerUpdate(LPARAM lParam, WPARAM wParam) {
 			break;
 		}
 
-		
 
 		tempInfo.id = GET_POINTERID_WPARAM(wParam);
 		tempInfo.position.x = pointerInfo.ptPixelLocation.x;
 		tempInfo.position.y = pointerInfo.ptPixelLocation.y;
 		tempInfo.flags = pointerInfo.pointerFlags;
-
-		//tempInfo.type = pointerType;
 
 		Win32Event newEvent;
 		newEvent.eventGroup = Win32Event::INPUT_EVENT;
@@ -783,6 +769,7 @@ void Win32Core::handlePointerUpdate(LPARAM lParam, WPARAM wParam) {
 
 	unlockMutex(eventMutex);
 }
+#endif
 
 void Win32Core::handleMouseMove(LPARAM lParam, WPARAM wParam) {
 	lockMutex(eventMutex);

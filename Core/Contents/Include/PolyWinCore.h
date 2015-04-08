@@ -95,8 +95,12 @@
 
 #define EXTENDED_KEYMASK	(1<<24)
 
+//#define NO_TOUCH_API
+#define NO_PEN_API
+
 #ifdef _MINGW
 #define NO_TOUCH_API 1
+#define NO_PEN_API 1
 #endif
 
 #define POLYCODE_CORE Win32Core
