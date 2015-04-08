@@ -97,6 +97,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			core->handleMouseUp(CoreInput::MOUSE_BUTTON2, lParam,wParam);
 	break;
 
+	/*
 #ifndef NO_TOUCH_API
 	case WM_TOUCH:
 		if(core) {
@@ -106,8 +107,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	break;
 #endif
-
+	*/
+	
 	case WM_POINTERUPDATE:
+	case WM_POINTERUP:
+	case WM_POINTERDOWN:
 		if (core)
 			core->handlePointerUpdate(lParam, wParam);
 	break;
